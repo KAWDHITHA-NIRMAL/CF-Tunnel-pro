@@ -11,9 +11,9 @@ Created by **Kawditha Nirmal**.
 ## Features
 
 - **Lifetime Authentication**: Secure login portal with lifetime session persistence (via encrypted tokens) so you only need to login once per device.
-- **Cloudflare Account Authorization**: Connect your Cloudflare account directly from the UI and fetch your authorized domains automatically.
-- **Custom Domain Tunnels (Named Tunnels)**: Route any custom subdomain (e.g., `app.yourdomain.com`) to a local VPS port with 1 click.
-- **Temporary Quick Tunnels**: Quickly expose a port without a Cloudflare account using ephemeral `trycloudflare.com` URLs.
+- **Multi-Domain Management**: Add and authorize multiple Cloudflare domains directly from the UI. Select which base domain to use when creating custom tunnels.
+- **Custom Domain Tunnels**: Route any custom subdomain (e.g., `app.yourdomain.com`) to a local VPS port with 1 click.
+- **Temporary Quick Tunnels**: Quickly expose a local port without a Cloudflare account using ephemeral `trycloudflare.com` URLs.
 - **Permanent Tunnels & Auto-Restart**: Select the "Run Permanently" option, and your tunnel will automatically start running in the background. Even if your VPS restarts, CF Tunnel Pro's daemon will automatically relaunch your permanent tunnels!
 - **Tunnel Manager**: View a real-time list of all active/offline tunnels, stop/start them instantly, or delete them.
 
@@ -45,10 +45,10 @@ If you just want to test it locally:
 
 1. Navigate to `http://<YOUR_VPS_IP>:1215` in your browser.
 2. Enter your administrator password.
-3. **Step 1:** Click **"Connect Cloudflare Account"**. It will generate an authorization URL. Open it in a new tab, login to Cloudflare, and authorize your domain.
-4. **Step 2:** Return to CF Tunnel Pro. Once authorized, your domain will appear in the dashboard.
-5. **Step 3:** Use the **Custom Domain Tunnel** card to route a subdomain (like `api`) to a local port (like `3000`). Check "Run Permanently" if you want this tunnel to survive VPS reboots.
-6. Manage your tunnels from the list on the right.
+3. **Step 1:** In the **Authorized Domains** panel, type your base domain name (e.g., `domain.com`) and click **"Authorize & Add"**.
+4. **Step 2:** A Cloudflare authorization link will appear. Open it, select your domain in Cloudflare, and authorize it. Once complete, the domain will automatically be added to your list.
+5. **Step 3:** Use the **Custom Domain Tunnel** form to route a subdomain to a local port. Select your base domain from the dropdown list. Check "Run Permanently" if you want this tunnel to survive VPS reboots.
+6. Manage your active tunnels (start, stop, delete) from the Tunnels list on the right.
 
 ## Uninstallation
 
