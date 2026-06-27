@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             loginOverlay.classList.add('hidden');
             mainContent.classList.remove('hidden');
-            loadCFStatus();
+            loadDomains();
             loadTunnels();
         }, 300);
         
@@ -62,51 +62,89 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(loadTunnels, 5000);
     }
 
-    // Cloudflare Status
-    const cfStatusText = document.getElementById('cfStatusText');
-    const cfLoginBtn = document.getElementById('cfLoginBtn');
+    // Domain & CF Authorization Logic
+    const addDomainForm = document.getElementById('addDomainForm');
+    const newDomainInput = document.getElementById('newDomainInput');
+    const addDomainBtn = document.getElementById('addDomainBtn');
     const cfLoginModal = document.getElementById('cfLoginModal');
     const cfLoginLink = document.getElementById('cfLoginLink');
+    const domainsList = document.getElementById('domainsList');
+    const pBaseDomain = document.getElementById('pBaseDomain');
 
-    async function loadCFStatus() {
-        try {
-            const data = await api.request('/cf/status');
-            if (data.authorized) {
-                cfStatusText.innerHTML = `<span class="text-emerald-500 font-medium">Authorized</span> (${data.domain})`;
-                cfLoginBtn.classList.add('hidden');
-            } else {
-                cfStatusText.innerHTML = `<span class="text-slate-500">Not connected</span>`;
-                cfLoginBtn.classList.remove('hidden');
-            }
-        } catch(e) {}
-    }
+    addDomainForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const domain = newDomainInput.value.trim();
+        if (!domain) return;
 
-    cfLoginBtn.addEventListener('click', async () => {
-        cfLoginBtn.disabled = true;
-        cfLoginBtn.innerText = 'Requesting...';
+        addDomainBtn.disabled = true;
+        addDomainBtn.innerText = 'Requesting...';
         try {
-            const data = await api.request('/cf/login', { method: 'POST' });
+            const initialDomains = await api.request('/domains');
+            const initialCount = initialDomains.length;
+
+            const data = await api.request('/cf/login', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain }) 
+            });
+            
             if (data.url) {
                 cfLoginModal.classList.remove('hidden');
                 cfLoginLink.href = data.url;
                 cfLoginLink.innerText = data.url;
-                cfLoginBtn.innerText = 'Waiting for Authorization...';
+                addDomainBtn.innerText = 'Waiting...';
                 
                 const pollCF = setInterval(async () => {
-                    const status = await api.request('/cf/status');
-                    if (status.authorized) {
+                    const currentDomains = await api.request('/domains');
+                    if (currentDomains.length > initialCount) {
                         clearInterval(pollCF);
                         cfLoginModal.classList.add('hidden');
-                        loadCFStatus();
+                        addDomainBtn.disabled = false;
+                        addDomainBtn.innerText = 'Authorize & Add';
+                        newDomainInput.value = '';
+                        loadDomains();
                     }
                 }, 3000);
             }
         } catch(e) {
-            cfLoginBtn.disabled = false;
-            cfLoginBtn.innerText = 'Connect Account';
+            addDomainBtn.disabled = false;
+            addDomainBtn.innerText = 'Authorize & Add';
             alert('Failed to start login process');
         }
     });
+
+    async function loadDomains() {
+        try {
+            const domains = await api.request('/domains');
+            renderDomains(domains);
+            updateDomainDropdown(domains);
+        } catch (e) {}
+    }
+
+    function renderDomains(domains) {
+        if (domains.length === 0) {
+            domainsList.innerHTML = '<li class="text-xs text-slate-500">No domains added yet.</li>';
+            return;
+        }
+        domainsList.innerHTML = domains.map(d => `
+            <li class="flex items-center justify-between text-sm py-1 border-b border-slate-50 last:border-0">
+                <span class="font-medium text-slate-700">${d}</span>
+                <button onclick="deleteDomain('${d}')" class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded bg-red-50">Remove</button>
+            </li>
+        `).join('');
+    }
+
+    function updateDomainDropdown(domains) {
+        pBaseDomain.innerHTML = '<option value="" disabled selected>Select Domain</option>' + 
+            domains.map(d => `<option value="${d}">${d}</option>`).join('');
+    }
+
+    window.deleteDomain = async (domain) => {
+        if(confirm(`Are you sure you want to remove ${domain}?`)) {
+            await api.request(`/domains/${domain}`, { method: 'DELETE' });
+            loadDomains();
+        }
+    };
 
     // Create Tunnels
     const permanentTunnelForm = document.getElementById('permanentTunnelForm');
@@ -115,12 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
     permanentTunnelForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const subdomain = document.getElementById('pSubdomain').value;
+        const baseDomain = document.getElementById('pBaseDomain').value;
         const port = document.getElementById('pPort').value;
         const isPermanent = document.getElementById('pPermanent').checked;
         
         await api.request('/tunnels', {
             method: 'POST',
-            body: JSON.stringify({ subdomain, port, isPermanent, isTemporary: false })
+            body: JSON.stringify({ subdomain, baseDomain, port, isPermanent, isTemporary: false })
         });
         
         document.getElementById('pSubdomain').value = '';
