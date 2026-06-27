@@ -1,0 +1,14 @@
+{
+  "name": "cf-tunnel-pro",
+  "version": "1.0.0",
+  "description": "CF Tunnel Pro - Cloudflare Tunnel VPS Manager by Kawditha Nirmal",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "author": "Kawditha Nirmal",
+  "license": "MIT"
+}
